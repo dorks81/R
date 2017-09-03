@@ -1,0 +1,160 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx, verbatim}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\setlength{\textwidth}{6.5in} 
+\setlength{\textheight}{9in}
+\setlength{\oddsidemargin}{0in} 
+\setlength{\evensidemargin}{0in}
+\setlength{\topmargin}{-1.5cm}
+
+\title{Title On\\
+Multiple Lines}
+
+\author{Dayne Okuhara}
+\date{July 31, 2017}
+
+\begin{document}
+\maketitle
+\SweaveOpts{concordance=TRUE, keep.blank.space=TRUE, keep.space=TRUE}
+
+\section{New Lines}
+\begin{Verbatim}
+\\ new line
+\newline new line
+% comment outside of chunks
+\bigbreak Insert a blank line.  The new line will be indented
+\end{Verbatim}
+
+\subsection{Examples}
+\begin{Verbatim}
+Insert a 'new line 1' after this line\\
+'new line 1'\\
+Insert a 'blank line below' after this line\bigbreak
+This line is indented with a blank line above\\
+Insert a 'blank line below' after this line\bigbreak
+\noindent 
+This line is not indented with a blank line above\newline
+\end{Verbatim}
+\noindent 
+Insert a 'new line 1' after this line\\
+'new line 1'\\
+Insert a 'blank line below' after this line\bigbreak
+This line is indented with a blank line above\\
+Insert a 'blank line below' after this line\bigbreak
+\noindent 
+This line is not indented with a blank line above\newline
+
+\section{Escaping Special Character}
+\begin{Verbatim}[fontsize=\small]
+Special characters include:
+_  % { } ^ \
+Escape special characters by placing a backslash in front of the character.
+\10_, \10%, \{10, 10\}, \10^\\
+\ is an exception.  Use \textbackslash to print \
+10\textbackslash
+\end{Verbatim}
+
+\subsection{Examples}
+dataframe\$Column\\
+10\_\\
+10\%\\
+\{10  10\}\\
+10\^\\
+10\textbackslash
+
+\section{Spacing}
+\begin{Verbatim}
+\ in front of a space to insert a single space
+\, inserts a thinspace 0.167em
+\enspace inserts a 0.5em space
+\quad inserts a 1em space
+\quad inserts a 2em space
+\qqquad qquad
+\hspace{3cm} insert a blank space of specific length, i.e, 8.2em, 90pt or 3cm
+\indent indent
+\noindent noindent
+\vspace{10mm} Starts a new paragraph by inserting a blank space between lines with 
+specific a length.
+
+Math mode requires the expression and space option is bracketed with $
+$a\enspace$ enspace\\
+$a\quad$ quad\\
+$a\qquad$ qquad\\
+\end{Verbatim}
+
+\subsection{Examples}
+\begin{Verbatim}
+Text mode:
+a\enspace enspace
+a\quad quad
+a\qquad qquad
+a \hspace{3cm} 3 cm hspace
+\indent indent
+\noindent noindent followed by \textbackslash vspace\{5cm\}
+\vspace {5mm}
+new paragraph
+Notice how escaping ^ with a \ places the ^ directly above the 2 in the expression n^2.
+By using n\^\,2, this places and empty space between the ^ and 2
+n\^2 \quad n\^\,2
+
+Math mode with $:
+$a\enspace$ enspace
+$a\quad$ quad
+$a\qquad$ qquad
+\end{Verbatim}
+Text mode:\\
+a\enspace enspace\\
+a\quad quad\\
+a\qquad qquad\\
+a \hspace{3cm} 3 cm hspace\\
+\indent indent
+
+\noindent noindent followed by \textbackslash vspace\{5cm\}\\
+\vspace {5mm}
+
+new paragraph\\
+n\^2 \quad n\^\,2\\
+\\
+Math mode with \$:\\
+$a\enspace$ enspace\\
+$a\quad$ quad\\
+$a\qquad$ qquad\\
+
+\section{Verbatim}
+There are several ways to introduce text that won't be interpreted by the compiler.
+If you use the Verbatim environment, everything input between the begin and end
+commands are processed as if by a typewriter.\\
+Start Verbatim use the option: \textbackslash begin\{Verbatim\}[fontsize=\textbackslash small]\newline
+End Verbatim use the option: \textbackslash end\{Verbatim\}
+
+\subsection{Example}
+\begin{Verbatim}[fontsize=\small]
+GAGTAATCCTTCACTTCAAGGCCAGTCTTCACATCTCATCAGA
+ACATCTCA
+ ACATCTCA
+  ACATCTCA
+    ACATCTCA
+\end{Verbatim}
+
+\section{Specific For R outputs}
+\begin{Verbatim}[fontsize=\small]
+In some case, the Signif codes may appear as gibberish.  If this occurs add the following 
+lines to the preamble:
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\end{Verbatim}
+<<example1>>=
+x <- c(151, 174, 138, 186, 128, 136, 179, 163, 152, 131)
+y <- c(63, 81, 56, 91, 47, 57, 76, 72, 62, 48)
+fit <- lm(y~x)
+
+print(summary(fit))
+@
+
+<<example2>>=
+tab <- matrix(c(0.3,0.2,0.3,0.2),2,2)
+tab
+chisq.test(tab,correct=FALSE)
+@
+\end{document}
