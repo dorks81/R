@@ -1,0 +1,247 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx, verbatim}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+%\usepackage{xltxtra} 
+\setlength{\textwidth}{6.5in} 
+\setlength{\textheight}{9in}
+\setlength{\oddsidemargin}{0in} 
+\setlength{\evensidemargin}{0in}
+\setlength{\topmargin}{-1.5cm}
+
+\title{ggplot2 Notes}
+
+\author{Dayne Okuhara}
+\date{August 31, 2017}
+
+\begin{document}
+\maketitle
+\SweaveOpts{concordance=TRUE, keep.blank.space=TRUE, keep.space=TRUE}
+
+First lets begin by examing the main data frame "midwest" and the columns which will be used to design the scatter plot.
+\section{Scatter Plots}
+<<>>=
+library(ggplot2)
+library(dplyr)
+
+options(scipen=999)  # turn off scientific notation like 1e+06
+data("midwest", package = "ggplot2")  # load the data
+#midwest <- read.csv("http://goo.gl/G1K41K") # alt source 
+
+
+names(midwest)
+head(midwest[,c("area","poptotal","state")])
+sapply(midwest, function(y) sum(length(which(is.na(y)))))
+
+@
+
+Good, there are no na's.  Now let's look at the default scatterpot where each point represents a county
+<<fig=T>>=
+ggplot(midwest, aes(x = area, y = poptotal)) + geom_point()
+
+@
+
+It is easiest if we start by setting the symbol size and points.  This way we can save the plot as an object and gradually add more layers.
+<<fig=T>>=
+g1 <- ggplot(midwest, aes(x = area, y = poptotal)) + 
+  geom_point(col = "steelblue", size=3)
+plot(g1)
+@
+
+Next let's zoom in on the graph by manually setting the x any y limits to area < 0.1 and poptotal < 1000000.  Also add a main title, subtitle, and change the axis labels.  The main title and subtitle are left-aligned by default.  We will center align the titles.
+<<fig=T>>=
+# number of excluded points from plot
+
+sum(midwest$area > 0.1 | midwest$poptotal > 1000000)
+
+g1.1 <- g1 + coord_cartesian(xlim = c(0,0.1), ylim = c(0, 1000000)) +
+  ggtitle("Area Vs Population", subtitle="From midwest dataset") + 
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5)) +
+  xlab("Area") + 
+  ylab("Population")
+plot(g1.1)
+@
+
+\subsection{Adding A Regression Line}
+Add a regression line with geom\_smooth(). The default method is a loess smoothed fit curve with 95\% confidence region.
+<<fig=T>>=
+g1.1 + geom_smooth() 
+
+# set se=FALSE to turnoff confidence bands
+#g1.1 + geom_smooth(se = FALSE) 
+
+@
+
+lm (linear regression) is another method.  By default the line is solid and blue.  Change it to longdash and"firebrick" color.
+<<fig=T>>=
+g1.2 <- g1.1 + geom_smooth(method = "lm", 
+                     col = "firebrick",
+                     linetype = "longdash")
+plot(g1.2)
+@
+
+\subsection{Scatterplot With Multiple Groups}
+
+First, examine plot with default symbols and colors for data grouped by state.
+<<fig=T>>=
+ggplot(midwest, aes(x = area, y = poptotal, shape = state, col=state)) + geom_point()
+@
+
+Set all other parameters as used above for g1.1.  Change the colors, symbols and symbol size.  
+<<fig=T>>=
+g2 <- ggplot(midwest, aes(x = area, y = poptotal, shape = state, col = state))  + geom_point(size=3)
+
+g2.1 <- g2 + coord_cartesian(xlim = c(0,0.1), ylim = c(0, 1000000)) +
+  ggtitle("Area Vs Population", subtitle="From midwest dataset") + 
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5)) +
+  xlab("Area") + 
+  ylab("Population")  
+
+g2.2 <- g2.1 +
+  scale_shape_manual(values = c(1, 15, 17, 5, 18)) +
+  scale_color_manual(values = c('black','#E69F00', '#56B4E9', "violetred4", "slateblue"))
+plot(g2.2)
+@
+
+Add regression line...
+<<fig=T>>=
+g2.2 + geom_smooth(method = "lm", aes(fill=state))
+@
+
+WTF .... 5 regession lines. ggplot is calculating the regression lines based on grouping variable state.  This is because g2.2 was saved with data already grouped by state.  We need to preform the geom\_smooth() function with a 
+ggplot object that has been grouped.  Also, let's move the legend to the top.
+<<fig=T>>=
+g2 <- ggplot(midwest, aes(x = area, y = poptotal)) + 
+  coord_cartesian(xlim = c(0,0.1), ylim = c(0, 1000000)) +
+  ggtitle("Area Vs Population", subtitle="From midwest dataset") + 
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5)) +
+  xlab("Area") + 
+  ylab("Population")
+
+g2.3 <- g2 + geom_point(aes(shape = state, col = state ), size = 3) +
+  scale_shape_manual(values = c(1, 15, 17, 5, 18)) +
+  scale_color_manual(values = c('black','#E69F00', '#56B4E9', "violetred4", "slateblue")) +
+  geom_smooth(method = "lm", 
+          col = "firebrick",
+          linetype = "longdash") +
+  theme(legend.position="top")
+
+plot(g2.3)
+
+@
+
+\section{Box Plots}
+In this section we will create boxplots for two different data frames then add points from a third data frame.  Box plots will be created for data frames df2 and df3.  The overlay points will come from df1.  Both df2 and df3 are subsets of df1. 
+
+\subsection{Multiple Grouping Factors}
+<<>>=
+df1 <- read.csv("CSample_Data1.csv", header = T)
+df2 <- read.csv("CSample_tab1.csv", header = T)
+df3 <- read.csv("CSample_tab2.csv", header = T)
+@
+
+
+Let's examine the default box plot with no interacting factors and coloured by GENE\_NAME         
+<<fig=T>>=
+g1 <- ggplot(df2, aes(x = GENE_NAME, y = FC_RPL, fill = GENE_NAME)) +
+      geom_boxplot() +
+      geom_hline(aes(yintercept=0), colour= "black", linetype = "dashed") +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      labs(x = "Gene Name")
+
+plot(g1)
+@
+
+The data in df2 has already been sorted by Class and GENE\_NAME.  However the default plot has rearranged the genes in a different order.  The code below correctly reorders the factors levels for all three data frames.
+<<>>=
+attributes(df2$GENE_NAME)
+df1$GENE_NAME <- factor(df1$GENE_NAME, levels = c("gene1", "gene2",  "gene3",
+                  "gene4", "gene5", "gene6", "gene7", "gene8", "gene9", "gene10", 
+                  "gene11", "gene12", "gene13", "gene14", "gene15" ))
+df2$GENE_NAME <- factor(df2$GENE_NAME, levels = c("gene1", "gene2",  "gene3",
+                  "gene4", "gene5", "gene6", "gene7", "gene8", "gene9", "gene10", 
+                  "gene11", "gene12", "gene13", "gene14", "gene15" ))
+df3$GENE_NAME <- factor(df3$GENE_NAME, levels = c("gene1", "gene2",  "gene3",
+                  "gene4", "gene5", "gene6", "gene7", "gene8", "gene9", "gene10", 
+                  "gene11", "gene12", "gene13", "gene14", "gene15" ))
+
+attributes(df1$GENE_NAME)
+attributes(df2$GENE_NAME)
+attributes(df3$GENE_NAME)
+@
+
+Now the gene order should be correct.
+<<fig=T>>=
+g1 <- ggplot(df2, aes(x = GENE_NAME, y = FC_RPL, fill = GENE_NAME)) +
+      geom_boxplot() +
+      geom_hline(aes(yintercept=0), colour= "black", linetype = "dashed") +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      labs(x = "Gene Name")
+
+plot(g1)
+@
+
+First lets manually select the colors for the box plots with the scale\_fill\_manual(values = colors) command.  Notice the boxes are not filled.
+
+<<fig=T>>=
+colors <- c(rep('chartreuse', 5),rep('darkgoldenrod2', 5), rep('cyan', 5))
+
+g1 <- ggplot(df2, aes(x = GENE_NAME, y = FC_RPL)) +
+      geom_boxplot() +
+      scale_fill_manual(values = colors) +
+      geom_hline(aes(yintercept=0), colour= "black", linetype = "dashed") +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      labs(x = "Gene Name")
+
+plot(g1)
+@
+
+The interaction() function is used to group the data based on two or more factors.  In this case, we want to first group the  boxplots based by GENE\_NAME and Class.  The use the scale\_fill\_manual(values=colors) command
+<<fig=T>>=
+g1 <- ggplot(df2, aes(x = GENE_NAME, y = FC_RPL, fill = interaction(GENE_NAME, Class))) +
+      geom_boxplot() +
+      scale_fill_manual(values=colors) +
+      geom_hline(aes(yintercept=0), colour= "black", linetype = "dashed") +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      labs(x = "Gene Name")
+
+plot(g1)
+@
+
+Next lets select a set of data from df1 and over lay the points on df2.
+<<Fig=T>>=
+sample <- "cmpd-25168828.0"
+tmp.df <- df1[df1$sample == sample,]
+title <- paste(sample,"vs df2")
+
+g2 <- g1 + geom_point(data = tmp.df, aes(x = GENE_NAME, y = FC_RPL, size = 3, col = 'red')) +
+  ggtitle(title)
+
+plot(g2)
+@
+
+Notice how the legend includes the geom\_point() data and it makes it look awkward.  Since the geom\_point() data is an added layer to the g1 object, the show.legend = FALSE option will only hide the geom\_point() legend.
+
+<<fig=T>>=
+g2 <- g1 + geom_point(data = tmp.df, aes(x = GENE_NAME, y = FC_RPL, size = 3, col = 'red'), show.legend = FALSE) +
+  ggtitle(title)
+plot(g2)
+@
+
+Finally, lets put it all togther by creating an identical boxplots for df3
+<<fig=T>>=
+title <- paste(sample,"vs df3")
+g3 <- ggplot(df3, aes(x = GENE_NAME, y = FC_RPL, fill = interaction(GENE_NAME, Class))) +
+      geom_boxplot() +
+      scale_fill_manual(values=colors) +
+      geom_hline(aes(yintercept=0), colour= "black", linetype = "dashed") +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      labs(x = "Gene Name")
+
+g4 <- g3 + geom_point(data = tmp.df, aes(x = GENE_NAME, y = FC_RPL, size = 3, col = 'red'), show.legend = FALSE) +
+  ggtitle(title)
+
+plot(g4)
+@
+\end{document}
