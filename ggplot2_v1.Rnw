@@ -109,7 +109,7 @@ Add regression line...
 g2.2 + geom_smooth(method = "lm", aes(fill=state))
 @
 
-WTF .... 5 regession lines. ggplot is calculating the regression lines based on grouping variable state.  This is because g2.2 was saved with data already grouped by state.  We need to preform the geom\_smooth() function with a 
+Oh snap .... 5 regession lines. ggplot is calculating the regression lines based on grouping variable state.  This is because g2.2 was saved with data already grouped by state.  We need to preform the geom\_smooth() function with a 
 ggplot object that has been grouped.  Also, let's move the legend to the top.
 <<fig=T>>=
 g2 <- ggplot(midwest, aes(x = area, y = poptotal)) + 
